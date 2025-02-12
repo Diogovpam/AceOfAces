@@ -39,8 +39,6 @@ class GameStateManager:
         self.current_player_page = self.player_page_manager.load_page()
         self.current_opponent_page = self.opponent_page_manager.load_page()
 
-        self.get_status()
-
     def get_status(self):
         tail = "" if self.current_player_page.tail else "not"
         out_fire = "" if self.current_player_page.fire in [FireType.OUT, FireType.MUTUAL] else "not"

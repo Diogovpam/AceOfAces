@@ -70,5 +70,3 @@ class Page(BaseModel):
 class PlayerInfo(BaseModel):
     player_name: str
     faction: Factions
-
-
