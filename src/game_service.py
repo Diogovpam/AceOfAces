@@ -1,6 +1,6 @@
-from typing import Dict, Optional, List
+from typing import Dict
 from fastapi import HTTPException
-from src.entities.request_models import CreateGameRequest, JoinGameRequest, StartGameRequest, SubmitMoveRequest
+from src.entities.request_models import CreateGameRequest, JoinGameRequest, SubmitMoveRequest
 from src.state_manager import GameStateManager, PlayerState
 from src.entities.entities import PlayerInfo, Factions
 

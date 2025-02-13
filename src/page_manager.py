@@ -2,7 +2,7 @@ from typing import List
 
 import pandas as pd
 
-from src.entities.entities import Page, Factions, Movement, DetailedMovement, FireType
+from src.entities.entities import Page, Factions, Movement, DetailedMovement
 from src.entities.move_defaults import DEFAULT_MOVE_LIST
 
 

@@ -1,7 +1,7 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 import uvicorn
 from src.game_service import GameManager
-from src.entities.request_models import CreateGameRequest, JoinGameRequest, StartGameRequest, SubmitMoveRequest
+from src.entities.request_models import CreateGameRequest, JoinGameRequest, SubmitMoveRequest
 
 app = FastAPI()
 service = GameManager()
