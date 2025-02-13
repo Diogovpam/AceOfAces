@@ -45,12 +45,19 @@ class FireType(str, Enum):
     NONE = "none"
 
 
+class Direction(str, Enum):
+    LEFT = "left"
+    STRAIGHT = "straight"
+    RIGHT = "right"
+
+
 class Movement(BaseModel):
     index: int
     next_page: Optional[int] = None
     descent: bool = False
     flair: bool = False
     modifier: int
+    direction: Direction
 
 
 class DetailedMovement(Movement):

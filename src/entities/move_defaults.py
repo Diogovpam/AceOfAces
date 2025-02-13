@@ -1,4 +1,4 @@
-from src.entities.entities import DetailedMovement
+from src.entities.entities import DetailedMovement, Direction
 from src.entities.move_content import MoveNames, MoveDescriptions
 
 DEFAULT_MOVE_LIST = [
@@ -6,13 +6,15 @@ DEFAULT_MOVE_LIST = [
         name=MoveNames.SLOW_LEFT_0,
         description=MoveDescriptions.SLOW_LEFT_0,
         index=0,
-        modifier=1
+        modifier=1,
+        direction=Direction.LEFT
     ),
     DetailedMovement(
         name=MoveNames.SLOW_LEFT_1,
         description=MoveDescriptions.SLOW_LEFT_1,
         index=1,
-        modifier=3
+        modifier=3,
+        direction=Direction.LEFT
     ),
     DetailedMovement(
         name=MoveNames.SLOW_LEFT_2,
@@ -20,38 +22,44 @@ DEFAULT_MOVE_LIST = [
         index=2,
         descent=True,
         flair=True,
-        modifier=1
+        modifier=1,
+        direction=Direction.LEFT
     ),
     DetailedMovement(
         name=MoveNames.SLOW_STRAIGHT_0,
         description=MoveDescriptions.SLOW_STRAIGHT_0,
         index=3,
         descent=True,
-        modifier=0
+        modifier=0,
+        direction=Direction.STRAIGHT
     ),
     DetailedMovement(
         name=MoveNames.SLOW_STRAIGHT_1,
         description=MoveDescriptions.SLOW_STRAIGHT_1,
         index=4,
-        modifier=0
+        modifier=0,
+        direction=Direction.STRAIGHT
     ),
     DetailedMovement(
         name=MoveNames.SLOW_STRAIGHT_2,
         description=MoveDescriptions.SLOW_STRAIGHT_2,
         index=5,
-        modifier=0
+        modifier=0,
+        direction=Direction.STRAIGHT
     ),
     DetailedMovement(
         name=MoveNames.SLOW_RIGHT_0,
         description=MoveDescriptions.SLOW_RIGHT_0,
         index=6,
-        modifier=1
+        modifier=1,
+        direction=Direction.RIGHT
     ),
     DetailedMovement(
         name=MoveNames.SLOW_RIGHT_1,
         description=MoveDescriptions.SLOW_RIGHT_1,
         index=7,
-        modifier=3
+        modifier=3,
+        direction=Direction.RIGHT
     ),
     DetailedMovement(
         name=MoveNames.SLOW_RIGHT_2,
@@ -59,13 +67,15 @@ DEFAULT_MOVE_LIST = [
         index=8,
         descent=True,
         flair=True,
-        modifier=1
+        modifier=1,
+        direction=Direction.RIGHT
     ),
     DetailedMovement(
         name=MoveNames.CRUISING_LEFT_0,
         description=MoveDescriptions.CRUISING_LEFT_0,
         index=9,
-        modifier=1
+        modifier=1,
+        direction=Direction.LEFT
     ),
     DetailedMovement(
         name=MoveNames.CRUISING_LEFT_1,
@@ -73,7 +83,8 @@ DEFAULT_MOVE_LIST = [
         index=10,
         descent=True,
         flair=True,
-        modifier=3
+        modifier=3,
+        direction=Direction.LEFT
     ),
     DetailedMovement(
         name=MoveNames.CRUISING_LEFT_2,
@@ -81,40 +92,46 @@ DEFAULT_MOVE_LIST = [
         index=11,
         descent=True,
         flair=True,
-        modifier=0
+        modifier=0,
+        direction=Direction.LEFT
     ),
     DetailedMovement(
         name=MoveNames.CRUISING_STRAIGHT_0,
         description=MoveDescriptions.CRUISING_STRAIGHT_0,
         index=12,
-        modifier=0
+        modifier=0,
+        direction=Direction.STRAIGHT
     ),
     DetailedMovement(
         name=MoveNames.CRUISING_STRAIGHT_1,
         description=MoveDescriptions.CRUISING_STRAIGHT_1,
         index=13,
         flair=True,
-        modifier=4
+        modifier=4,
+        direction=Direction.STRAIGHT
     ),
     DetailedMovement(
         name=MoveNames.CRUISING_STRAIGHT_2,
         description=MoveDescriptions.CRUISING_STRAIGHT_2,
         index=14,
         flair=True,
-        modifier=0
+        modifier=0,
+        direction=Direction.STRAIGHT
     ),
     DetailedMovement(
         name=MoveNames.CRUISING_STRAIGHT_3,
         description=MoveDescriptions.CRUISING_STRAIGHT_3,
         index=15,
         flair=True,
-        modifier=0
+        modifier=0,
+        direction=Direction.STRAIGHT
     ),
     DetailedMovement(
         name=MoveNames.CRUISING_RIGHT_0,
         description=MoveDescriptions.CRUISING_RIGHT_0,
         index=16,
-        modifier=1
+        modifier=1,
+        direction=Direction.RIGHT
     ),
     DetailedMovement(
         name=MoveNames.CRUISING_RIGHT_1,
@@ -122,7 +139,8 @@ DEFAULT_MOVE_LIST = [
         index=17,
         descent=True,
         flair=True,
-        modifier=3
+        modifier=3,
+        direction=Direction.RIGHT
     ),
     DetailedMovement(
         name=MoveNames.CRUISING_RIGHT_2,
@@ -130,48 +148,56 @@ DEFAULT_MOVE_LIST = [
         index=18,
         descent=True,
         flair=True,
-        modifier=0
+        modifier=0,
+        direction=Direction.RIGHT
     ),
     DetailedMovement(
         name=MoveNames.FAST_LEFT_0,
         description=MoveDescriptions.FAST_LEFT_0,
         index=19,
-        modifier=1
+        modifier=1,
+        direction=Direction.LEFT
     ),
     DetailedMovement(
         name=MoveNames.FAST_LEFT_1,
         description=MoveDescriptions.FAST_LEFT_1,
         index=20,
-        modifier=1
+        modifier=1,
+        direction=Direction.LEFT
     ),
     DetailedMovement(
         name=MoveNames.FAST_STRAIGHT_0,
         description=MoveDescriptions.FAST_STRAIGHT_0,
         index=21,
-        modifier=0
+        modifier=0,
+        direction=Direction.STRAIGHT
     ),
     DetailedMovement(
         name=MoveNames.FAST_STRAIGHT_1,
         description=MoveDescriptions.FAST_STRAIGHT_1,
         index=22,
-        modifier=1
+        modifier=1,
+        direction=Direction.STRAIGHT
     ),
     DetailedMovement(
         name=MoveNames.FAST_STRAIGHT_2,
         description=MoveDescriptions.FAST_STRAIGHT_2,
         index=23,
-        modifier=1
+        modifier=1,
+        direction=Direction.STRAIGHT
     ),
     DetailedMovement(
         name=MoveNames.FAST_RIGHT_0,
         description=MoveDescriptions.FAST_RIGHT_0,
         index=24,
-        modifier=1
+        modifier=1,
+        direction=Direction.RIGHT
     ),
     DetailedMovement(
         name=MoveNames.FAST_RIGHT_1,
         description=MoveDescriptions.FAST_RIGHT_1,
         index=25,
-        modifier=1
+        modifier=1,
+        direction=Direction.RIGHT
     )
 ]
