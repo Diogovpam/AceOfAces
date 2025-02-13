@@ -1,15 +1,15 @@
+from typing import Optional, Tuple
+
 from src.entities.entities import PlayerInfo, STATUS_TEMPLATE, FireType, Factions
 from src.page_manager import PageManager
 
 
 class PlayerState:
-
-    def __init__(self, player_name: str, faction: Factions, is_human: bool = True):
+    def __init__(self, player_name: str, faction: Factions):
         self.name = player_name
         self.faction = faction
         self.health = 6.0
-        self.is_human = is_human
-        self.ai_behavior = None if is_human else "default_ai"
+        self.page_manager = PageManager(self.faction)
 
     def take_damage(self, amount: float):
         self.health = max(0.0, self.health - amount)
@@ -24,20 +24,64 @@ class PlayerState:
 class GameStateManager:
 
     def __init__(self, player_info: PlayerInfo):
+        """ Initializes the game state, tracking both players. """
         self.player = PlayerState(**player_info.model_dump())
-
-        opposing_faction = Factions.get_opposing_faction(self.player.faction)
-
         self.opponent = PlayerState(
             player_name="Opponent",
-            faction=opposing_faction
+            faction=Factions.get_opposing_faction(self.player.faction)
         )
 
-        self.player_page_manager = PageManager(self.player.faction)
-        self.opponent_page_manager = PageManager(opposing_faction)
+        self.current_player_page = self.player.page_manager.load_page()
+        self.current_opponent_page = self.opponent.page_manager.load_page()
 
-        self.current_player_page = self.player_page_manager.load_page()
-        self.current_opponent_page = self.opponent_page_manager.load_page()
+        self.starting_move: Tuple[Optional[int], Optional[int]] = (None, None)
+
+        self.moves = {self.player.faction: self.starting_move, self.opponent.faction: self.starting_move}
+
+    def submit_move(self, faction: Factions, move_index: int):
+        """ Stores a submitted move and processes turn if both players have submitted. """
+        if self.player.faction == faction:
+            mid_page = self.current_player_page.moves[move_index].next_page
+        else:
+            mid_page = self.current_opponent_page.moves[move_index].next_page
+
+        self.moves[faction] = (move_index, mid_page)
+
+        if self.starting_move not in self.moves.values():
+            return self.process_turn()
+        return {"message": "Move received, waiting for opponent"}
+
+    def process_turn(self):
+        """ Resolves turn based on both players' moves, handling Page 223 cases. """
+        player_faction = self.player.faction
+        opponent_faction = self.opponent.faction
+
+        player_move_index, player_mid_page = self.moves[player_faction]
+        opponent_move_index, opponent_mid_page = self.moves[opponent_faction]
+
+        # Handle Page 223 case
+        if player_mid_page == 223:
+            result_page = self.player.page_manager.find_result(opponent_mid_page, player_move_index)
+        elif opponent_mid_page == 223:
+            result_page = self.opponent.page_manager.find_result(player_mid_page, opponent_move_index)
+        else:
+            # Normal case: resolve result page using opponent's mid-page
+            result_page = self.player.page_manager.find_result(opponent_mid_page, player_move_index)
+
+        # Reset moves for next turn
+        self.moves = {player_faction: (None, None), opponent_faction: (None, None)}
+
+        # If result page is 223, enter the special state
+        if result_page == 223:
+            self.current_player_page = self.player.page_manager.load_page()
+            self.current_opponent_page = self.opponent.page_manager.load_page()
+            return {"message": "Players lost each other! Choose to chase or flee."}
+
+        # Update player states
+        self.current_player_page = self.player.page_manager.load_page(result_page)
+        self.current_opponent_page = self.opponent.page_manager.load_page(result_page)
+
+        return {"message": "Turn resolved", "new_page": result_page}
 
     def get_status(self):
         tail = "" if self.current_player_page.tail else "not"
