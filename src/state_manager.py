@@ -40,6 +40,7 @@ class GameStateManager:
 
     def submit_move(self, faction: Factions, move_index: int):
         """ Stores a submitted move and processes turn if both players have submitted. """
+        direction_message = {}
         tailing_player, tailed_player, tailed_page = self.determine_tailing()
 
         if tailing_player:
@@ -48,15 +49,6 @@ class GameStateManager:
                 if self.moves[tailed_player.faction] == self.null_move:
                     return {"message": "Waiting for the tailed player to move first"}
 
-                # Get the direction of the tailed player's move
-                tailed_move_index, _ = self.moves[tailed_player.faction]
-                tailed_direction = tailed_page.moves[tailed_move_index].direction.value
-
-                return {
-                    "message": "Tailed player has moved. You must now choose your move.",
-                    "tailed_direction": tailed_direction
-                }
-
         if self.player.faction == faction:
             mid_page = self.current_player_page.moves[move_index].next_page
         else:
@@ -64,9 +56,20 @@ class GameStateManager:
 
         self.moves[faction] = (move_index, mid_page)
 
+        if tailed_player:
+
+            if faction == tailed_player.faction:
+                # Get the direction of the tailed player's move
+                tailed_move_index, _ = self.moves[tailed_player.faction]
+                tailed_direction = tailed_page.moves[tailed_move_index].direction.value
+
+                direction_message = {
+                    "tailed_direction": tailed_direction
+                }
+
         if self.null_move not in self.moves.values():
             return self.process_turn()
-        return {"message": "Move received, waiting for opponent"}
+        return {"message": "Move received, waiting for opponent", **direction_message}
 
     def determine_tailing(self):
         player_is_tailing = self.current_player_page.tail
