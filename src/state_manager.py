@@ -34,12 +34,29 @@ class GameStateManager:
         self.current_player_page = self.player.page_manager.load_page()
         self.current_opponent_page = self.opponent.page_manager.load_page()
 
-        self.starting_move: Tuple[Optional[int], Optional[int]] = (None, None)
+        self.null_move: Tuple[Optional[int], Optional[int]] = (None, None)
 
-        self.moves = {self.player.faction: self.starting_move, self.opponent.faction: self.starting_move}
+        self.moves = {self.player.faction: self.null_move, self.opponent.faction: self.null_move}
 
     def submit_move(self, faction: Factions, move_index: int):
         """ Stores a submitted move and processes turn if both players have submitted. """
+        tailing_player, tailed_player, tailed_page = self.determine_tailing()
+
+        if tailing_player:
+            if faction == tailing_player.faction:
+                # Tailing player can only submit after the tailed player
+                if self.moves[tailed_player.faction] == self.null_move:
+                    return {"message": "Waiting for the tailed player to move first"}
+
+                # Get the direction of the tailed player's move
+                tailed_move_index, _ = self.moves[tailed_player.faction]
+                tailed_direction = tailed_page.moves[tailed_move_index].direction.value
+
+                return {
+                    "message": "Tailed player has moved. You must now choose your move.",
+                    "tailed_direction": tailed_direction
+                }
+
         if self.player.faction == faction:
             mid_page = self.current_player_page.moves[move_index].next_page
         else:
@@ -47,9 +64,29 @@ class GameStateManager:
 
         self.moves[faction] = (move_index, mid_page)
 
-        if self.starting_move not in self.moves.values():
+        if self.null_move not in self.moves.values():
             return self.process_turn()
         return {"message": "Move received, waiting for opponent"}
+
+    def determine_tailing(self):
+        player_is_tailing = self.current_player_page.tail
+        opponent_is_tailing = self.current_opponent_page.tail
+
+        # Identify the tailing and tailed players
+        if player_is_tailing:
+            tailing_player = self.player
+            tailed_player = self.opponent
+            tailed_page = self.current_opponent_page
+        elif opponent_is_tailing:
+            tailing_player = self.opponent
+            tailed_player = self.player
+            tailed_page = self.current_player_page
+        else:
+            tailing_player = None
+            tailed_player = None
+            tailed_page = None
+
+        return tailing_player, tailed_player, tailed_page
 
     def process_turn(self):
         """ Resolves turn based on both players' moves, handling Page 223 cases. """
