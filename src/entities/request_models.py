@@ -20,6 +20,5 @@ class StartGameRequest(BaseModel):
 
 class SubmitMoveRequest(BaseModel):
     game_id: str
-    player_name: str
+    faction: Factions
     move_index: int
-    mid_page: int
