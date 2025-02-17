@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 import uvicorn
 from src.game_service import GameManager
-from src.entities.request_models import CreateGameRequest, JoinGameRequest, SubmitMoveRequest
+from src.entities.request_models import CreateGameRequest, JoinGameRequest, SubmitMoveRequest, SubmitLostRequest
 
 app = FastAPI()
 service = GameManager()
@@ -25,6 +25,11 @@ def join_game(request: JoinGameRequest):
 @app.post("/submit-move")
 def submit_move(request: SubmitMoveRequest):
     return service.submit_move(request)
+
+
+@app.post("/submit-lost-decision")
+def submit_lost_decision(request: SubmitLostRequest):
+    return service.submit_lost_decision(request)
 
 
 if __name__ == "__main__":

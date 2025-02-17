@@ -1,6 +1,6 @@
 from typing import Dict
 from fastapi import HTTPException
-from src.entities.request_models import CreateGameRequest, JoinGameRequest, SubmitMoveRequest
+from src.entities.request_models import CreateGameRequest, JoinGameRequest, SubmitMoveRequest, SubmitLostRequest
 from src.state_manager import GameStateManager, PlayerState
 from src.entities.entities import PlayerInfo, Factions
 
@@ -44,4 +44,20 @@ class GameManager:
             raise HTTPException(status_code=404, detail="Game not found")
 
         game = self.games[request.game_id]
-        return game.submit_move(request.faction, request.move_index)
+        message = game.submit_move(request.faction, request.move_index)
+        self._end_game(message, request.game_id)
+        return message
+
+    def submit_lost_decision(self, request: SubmitLostRequest):
+        """ Submits a decision when in lost state"""
+        if request.game_id not in self.games:
+            raise HTTPException(status_code=404, detail="Game not found")
+
+        game = self.games[request.game_id]
+        message = game.submit_lost_state_decision(request.faction, request.decision)
+        self._end_game(message, request.game_id)
+        return message
+
+    def _end_game(self, message: dict, game_id: str):
+        if message.get("game_end"):
+            self.games.pop(game_id)

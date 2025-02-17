@@ -37,6 +37,15 @@ class Distance(str, Enum):
     MEDIUM = "medium"
     CLOSE = "close"
 
+    @classmethod
+    def get_damage(cls, distance: "Distance") -> float:
+        if distance == cls.CLOSE:
+            return 2.0
+        if distance == cls.MEDIUM:
+            return 1.0
+        if distance == cls.LONG:
+            return 0.5
+
 
 class FireType(str, Enum):
     OUT = "out"
@@ -77,3 +86,8 @@ class Page(BaseModel):
 class PlayerInfo(BaseModel):
     player_name: str
     faction: Factions
+
+
+class FleeDecision(str, Enum):
+    FLEE = "flee"
+    CHASE = "chase"

@@ -1,20 +1,27 @@
 from pydantic import BaseModel
 
-from src.entities.entities import Factions
+from src.entities.entities import Factions, FleeDecision
 
 
-class CreateGameRequest(BaseModel):
+class BaseRequest(BaseModel):
     game_id: str = "game1"
-    player_name: str = "Diogo"
+
+
+class RequestFaction(BaseRequest):
     faction: Factions
 
 
-class JoinGameRequest(BaseModel):
-    game_id: str = "game1"
+class CreateGameRequest(RequestFaction):
+    player_name: str = "Diogo"
+
+
+class JoinGameRequest(BaseRequest):
     player_name: str = "Duda"
 
 
-class SubmitMoveRequest(BaseModel):
-    game_id: str = "game1"
-    faction: Factions
+class SubmitMoveRequest(RequestFaction):
     move_index: int
+
+
+class SubmitLostRequest(RequestFaction):
+    decision: FleeDecision

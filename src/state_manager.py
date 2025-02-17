@@ -1,6 +1,6 @@
 from typing import Optional, Tuple
 
-from src.entities.entities import PlayerInfo, STATUS_TEMPLATE, FireType, Factions
+from src.entities.entities import PlayerInfo, STATUS_TEMPLATE, FireType, Factions, FleeDecision, Distance
 from src.page_manager import PageManager
 
 
@@ -22,6 +22,11 @@ class PlayerState:
 
 
 class GameStateManager:
+    null_move: Tuple[Optional[int], Optional[int]] = (None, None)
+    null_lost_state: Optional[FleeDecision] = None
+    tailing_player = None
+    tailed_player = None
+    tailed_page = None
 
     def __init__(self, player_info: PlayerInfo):
         """ Initializes the game state, tracking both players. """
@@ -34,19 +39,27 @@ class GameStateManager:
         self.current_player_page = self.player.page_manager.load_page()
         self.current_opponent_page = self.opponent.page_manager.load_page()
 
-        self.null_move: Tuple[Optional[int], Optional[int]] = (None, None)
+        self.moves = {
+            self.player.faction: self.null_move,
+            self.opponent.faction: self.null_move
+        }
 
-        self.moves = {self.player.faction: self.null_move, self.opponent.faction: self.null_move}
+        self.lost_state_decisions = {
+            self.player.faction: self.null_lost_state,
+            self.opponent.faction: self.null_lost_state
+        }
 
     def submit_move(self, faction: Factions, move_index: int):
         """ Stores a submitted move and processes turn if both players have submitted. """
         direction_message = {}
-        tailing_player, tailed_player, tailed_page = self.determine_tailing()
 
-        if tailing_player:
-            if faction == tailing_player.faction:
+        if self.current_player_page.page_num == 223 or self.current_opponent_page.page_num == 223:
+            return {"message": "Players must choose to chase or flee!"}
+
+        if self.tailing_player:
+            if faction == self.tailing_player.faction:
                 # Tailing player can only submit after the tailed player
-                if self.moves[tailed_player.faction] == self.null_move:
+                if self.moves[self.tailed_player.faction] == self.null_move:
                     return {"message": "Waiting for the tailed player to move first"}
 
         if self.player.faction == faction:
@@ -56,42 +69,33 @@ class GameStateManager:
 
         self.moves[faction] = (move_index, mid_page)
 
-        if tailed_player:
+        if self.tailed_player:
 
-            if faction == tailed_player.faction:
+            if faction == self.tailed_player.faction:
                 # Get the direction of the tailed player's move
-                tailed_move_index, _ = self.moves[tailed_player.faction]
-                tailed_direction = tailed_page.moves[tailed_move_index].direction.value
+                tailed_move_index, _ = self.moves[self.tailed_player.faction]
+                tailed_direction = self.tailed_page.moves[tailed_move_index].direction.value
 
                 direction_message = {
                     "tailed_direction": tailed_direction
                 }
 
         if self.null_move not in self.moves.values():
-            return self.process_turn()
+            return self._process_turn()
         return {"message": "Move received, waiting for opponent", **direction_message}
 
-    def determine_tailing(self):
-        player_is_tailing = self.current_player_page.tail
-        opponent_is_tailing = self.current_opponent_page.tail
+    def submit_lost_state_decision(self, faction: Factions, decision: FleeDecision):
+        if self.current_player_page.page_num != 223 or self.current_opponent_page.page_num != 223:
+            return {"message": "You aren't lost! Please submit a movement!"}
 
-        # Identify the tailing and tailed players
-        if player_is_tailing:
-            tailing_player = self.player
-            tailed_player = self.opponent
-            tailed_page = self.current_opponent_page
-        elif opponent_is_tailing:
-            tailing_player = self.opponent
-            tailed_player = self.player
-            tailed_page = self.current_player_page
-        else:
-            tailing_player = None
-            tailed_player = None
-            tailed_page = None
+        self.lost_state_decisions[faction] = decision
 
-        return tailing_player, tailed_player, tailed_page
+        if None not in self.lost_state_decisions.values():
+            return self._resolve_lost_state()
 
-    def process_turn(self):
+        return {"message": "Decision received, waiting for opponent"}
+
+    def _process_turn(self):
         """ Resolves turn based on both players' moves, handling Page 223 cases. """
         player_faction = self.player.faction
         opponent_faction = self.opponent.faction
@@ -109,21 +113,84 @@ class GameStateManager:
             result_page = self.player.page_manager.find_result(opponent_mid_page, player_move_index)
 
         # Reset moves for next turn
-        self.moves = {player_faction: (None, None), opponent_faction: (None, None)}
+        self.moves = {player_faction: self.null_move, opponent_faction: self.null_move}
 
         # If result page is 223, enter the special state
         if result_page == 223:
-            self.current_player_page = self.player.page_manager.load_page()
-            self.current_opponent_page = self.opponent.page_manager.load_page()
+            self.current_player_page = self.player.page_manager.load_page(result_page)
+            self.current_opponent_page = self.opponent.page_manager.load_page(result_page)
+            self._determine_tailing()
+            self.lost_state_decisions = {player_faction: self.null_lost_state, opponent_faction: self.null_lost_state}
             return {"message": "Players lost each other! Choose to chase or flee."}
 
         # Update player states
-        self.current_player_page = self.player.page_manager.load_page(result_page)
-        self.current_opponent_page = self.opponent.page_manager.load_page(result_page)
+        self._resolve_turn(result_page)
 
         return {"message": "Turn resolved", "new_page": result_page}
 
-    def get_status(self):
+    def _resolve_turn(self, result_page):
+        self.current_player_page = self.player.page_manager.load_page(result_page)
+        self.current_opponent_page = self.opponent.page_manager.load_page(result_page)
+
+        self._deal_damage()
+
+        self._determine_tailing()
+
+    def _deal_damage(self):
+        damage = Distance.get_damage(self.current_player_page.distance)
+
+        if self.current_player_page.fire == FireType.NONE and self.current_opponent_page.fire == FireType.NONE:
+            pass
+
+        if self.current_player_page.fire == FireType.MUTUAL or self.current_opponent_page.fire == FireType.MUTUAL:
+            self.player.take_damage(damage)
+            self.opponent.take_damage(damage)
+
+        if self.current_player_page.fire == FireType.OUT or self.current_opponent_page.fire == FireType.IN:
+            self.opponent.take_damage(damage)
+
+        if self.current_player_page.fire == FireType.IN or self.current_opponent_page.fire == FireType.OUT:
+            self.player.take_damage(damage)
+
+    def _determine_tailing(self):
+        player_is_tailing = self.current_player_page.tail
+        opponent_is_tailing = self.current_opponent_page.tail
+
+        # Identify the tailing and tailed players
+        if player_is_tailing:
+            self.tailing_player = self.player
+            self.tailed_player = self.opponent
+            self.tailed_page = self.current_opponent_page
+        elif opponent_is_tailing:
+            self.tailing_player = self.opponent
+            self.tailed_player = self.player
+            self.tailed_page = self.current_player_page
+        else:
+            self.tailing_player = None
+            self.tailed_player = None
+            self.tailed_page = None
+
+    def _resolve_lost_state(self):
+        player_decision = self.lost_state_decisions[self.player.faction]
+        opponent_decision = self.lost_state_decisions[self.opponent.faction]
+
+        if player_decision == FleeDecision.FLEE and opponent_decision == FleeDecision.FLEE:
+            return {"message": "Both players fled. The game ends in a draw.", "game_end": True}
+
+        if player_decision == FleeDecision.CHASE and opponent_decision == FleeDecision.FLEE:
+            return {"message": f"{self.player.name} wins a half-victory as {self.opponent.name} fled.", "game_end": True}
+
+        if player_decision == FleeDecision.FLEE and opponent_decision == FleeDecision.CHASE:
+            return {"message": f"{self.opponent.name} wins a half-victory as {self.player.name} fled.", "game_end": True}
+
+        if player_decision == FleeDecision.CHASE and opponent_decision == FleeDecision.CHASE:
+            self.current_player_page = self.player.page_manager.load_page()
+            self.current_opponent_page = self.opponent.page_manager.load_page()
+            return {"message": "Both players chose to chase! The game resets at page 170."}
+
+        return {"message": "Unexpected error in resolving lost state."}
+
+    def _get_status(self):
         tail = "" if self.current_player_page.tail else "not"
         out_fire = "" if self.current_player_page.fire in [FireType.OUT, FireType.MUTUAL] else "not"
         in_fire = "" if self.current_player_page.fire in [FireType.IN, FireType.MUTUAL] else "not"
@@ -138,52 +205,3 @@ class GameStateManager:
                 in_fire
             )
         )
-
-    def play(self, player_movement_index: int, opp_mid_page: int) -> bool:
-
-        if opp_mid_page == 223:
-
-            opp_move_index = self.get_index_from_opp_mid_page(opp_mid_page)
-
-            result_page_num = self.opponent_page_manager.find_result(
-                mid_page_num=self.current_player_page.moves[player_movement_index].next_page,
-                movement_index=opp_move_index
-            )
-
-        else:
-
-            result_page_num = self.player_page_manager.find_result(
-                mid_page_num=opp_mid_page,
-                movement_index=player_movement_index
-            )
-
-        if result_page_num == 223:
-            self.current_player_page = self.player_page_manager.load_page()
-            self.current_opponent_page = self.opponent_page_manager.load_page()
-
-            return True
-
-        else:
-
-            self.current_player_page = self.player_page_manager.load_page(
-                page_num=result_page_num
-            )
-
-            self.current_opponent_page = self.opponent_page_manager.load_page(
-                page_num=result_page_num
-            )
-
-        self.resolve_current_page(player_movement_index)
-
-        return False
-
-    def resolve_current_page(self, movement_index: int):
-        executed_move = self.current_player_page.moves[movement_index]
-        print(f"You execute a {executed_move.name.value}")
-        print(executed_move.description.value)
-        self.get_status()
-        pass
-
-    def get_index_from_opp_mid_page(self, mid_turn_page_num: int):
-        for move in self.current_opponent_page.moves:
-            return move.index if move.next_page == mid_turn_page_num else None
