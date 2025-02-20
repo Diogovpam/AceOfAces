@@ -3,7 +3,9 @@ import uvicorn
 from src.game_service import GameManager
 from src.entities.request_models import CreateGameRequest, JoinGameRequest, SubmitMoveRequest, SubmitLostRequest
 
-app = FastAPI()
+app = FastAPI(
+    title="Ace of Aces API"
+)
 service = GameManager()
 
 
