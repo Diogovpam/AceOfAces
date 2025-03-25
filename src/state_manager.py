@@ -1,6 +1,9 @@
+import random
 from typing import Optional, Tuple
 
+from src.entities.endgame_messages import ENDGAME_MESSAGES
 from src.entities.entities import PlayerInfo, STATUS_TEMPLATE, FireType, Factions, FleeDecision, Distance
+from src.entities.health_status import PLAYER_HEALTH_DESCRIPTIONS
 from src.page_manager import PageManager
 
 
@@ -18,7 +21,9 @@ class PlayerState:
         return self.health > 0
 
     def __repr__(self):
-        return f"{self.name} ({self.faction.value}) - Health: {self.health}"
+        # Get the first applicable description
+        description = next(desc for hp, desc in PLAYER_HEALTH_DESCRIPTIONS if self.health >= hp)
+        return f"{self.name} ({self.faction.value})\n\n{description}"
 
 
 class GameStateManager:
@@ -121,7 +126,7 @@ class GameStateManager:
             self.current_opponent_page = self.opponent.page_manager.load_page(result_page)
             self._determine_tailing()
             self.lost_state_decisions = {player_faction: self.null_lost_state, opponent_faction: self.null_lost_state}
-            return {"message": "Players lost each other! Choose to chase or flee."}
+            return {"message": "Players lost each other! Choose to chase or flee.", "new_page": 223}
 
         # Update player states
         self._resolve_turn(result_page)
@@ -133,6 +138,18 @@ class GameStateManager:
         self.current_opponent_page = self.opponent.page_manager.load_page(result_page)
 
         self._deal_damage()
+
+        player_alive = self.player.is_alive()
+        opponent_alive = self.opponent.is_alive()
+
+        if not player_alive and not opponent_alive:
+            return {"message": "Both pilots go down in flames!", "game_end": True}
+
+        if not player_alive:
+            return {"message": self._get_endgame_message(self.opponent.name, self.player.name), "game_end": True}
+
+        if not opponent_alive:
+            return {"message": self._get_endgame_message(self.player.name, self.opponent.name), "game_end": True}
 
         self._determine_tailing()
 
@@ -189,6 +206,10 @@ class GameStateManager:
             return {"message": "Both players chose to chase! The game resets at page 170."}
 
         return {"message": "Unexpected error in resolving lost state."}
+
+    @staticmethod
+    def _get_endgame_message(winner, loser):
+        return random.choice(ENDGAME_MESSAGES).format(winner=winner, loser=loser)
 
     def _get_status(self):
         tail = "" if self.current_player_page.tail else "not"

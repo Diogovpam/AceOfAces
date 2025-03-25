@@ -34,5 +34,15 @@ def submit_lost_decision(request: SubmitLostRequest):
     return service.submit_lost_decision(request)
 
 
+@app.get("/get-current-page")
+def get_current_page(game_id: str):
+    return service.get_current_page(game_id)
+
+
+@app.get("/get-player-status")
+def get_player_status(game_id: str, player_name: str):
+    return service.get_player_status(game_id, player_name)
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

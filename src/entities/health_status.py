@@ -1,0 +1,15 @@
+PLAYER_HEALTH_DESCRIPTIONS = [
+    (6.0, "Your aircraft is in pristine condition, gliding smoothly through the sky."),
+    (5.5, "There are a few scratches and dents, but the plane is flying flawlessly."),
+    (5.0, "Minor damage to the fuselage—cosmetic at best. You feel confident."),
+    (4.5, "Small holes have torn through the wings, but handling remains steady."),
+    (4.0, "The aircraft shudders slightly in sharp maneuvers, some structural damage."),
+    (3.5, "The engine sputters now and then, and controls feel sluggish."),
+    (3.0, "Smoke trails behind you, fuel is leaking, and the wings are riddled with holes."),
+    (2.5, "Your arms ache from the strain of controlling the damaged aircraft."),
+    (2.0, "Blood trickles down your forehead from a gash, but you keep flying."),
+    (1.5, "Your body is bruised, and your vision blurs for a moment, but you push on."),
+    (1.0, "Pain sears through your side from shrapnel. The plane barely responds."),
+    (0.5, "You’re struggling to stay conscious, gripping the stick with numb fingers."),
+    (0.0, "Your aircraft spirals out of control, flames licking at the fuselage—this is the end."),
+]

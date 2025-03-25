@@ -1,12 +1,13 @@
 import sys
 import os
 
-
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "")))
 
 import streamlit as st
 import requests
 from src.entities.entities import Factions
+
+st.set_page_config(initial_sidebar_state="collapsed")
 
 # API base URL
 API_URL = "http://localhost:8000"  # Change if necessary
@@ -34,13 +35,13 @@ def fetch_games():
 def join_game(game_id, player_name):
     response = requests.post(f"{API_URL}/join-game", json={"game_id": game_id, "player_name": player_name})
     if response.status_code == 200:
+        data = response.json()
         st.session_state["game_id"] = game_id
         st.session_state["player_name"] = player_name
-        st.session_state["show_join_modal"] = False  # Close modal
-        st.switch_page("pages/playing_page.py")  # Redirect to playing page
+        st.session_state["faction"] = data["faction"]  # Store faction from response
+        st.switch_page("pages/playing_page.py")
     else:
         st.error(response.json().get("detail", "Error joining game"))
-
 
 # Create game function
 def create_game(game_id, player_name, faction):
@@ -51,8 +52,8 @@ def create_game(game_id, player_name, faction):
     if response.status_code == 200:
         st.session_state["game_id"] = game_id
         st.session_state["player_name"] = player_name
-        st.session_state["show_create_modal"] = False  # Close modal
-        st.switch_page("pages/playing_page.py")  # Redirect to playing page
+        st.session_state["faction"] = faction  # Store faction from input
+        st.switch_page("pages/playing_page.py")
     else:
         st.error(response.json().get("detail", "Error creating game"))
 

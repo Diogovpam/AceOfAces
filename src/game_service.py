@@ -61,3 +61,30 @@ class GameManager:
     def _end_game(self, message: dict, game_id: str):
         if message.get("game_end"):
             self.games.pop(game_id)
+
+    def get_current_page(self, game_id):
+        if game_id not in self.games:
+            raise HTTPException(status_code=404, detail="Game not found")
+
+        player_page_num = self.games[game_id].current_player_page.page_num
+        opponent_page_num = self.games[game_id].current_opponent_page.page_num
+
+        if player_page_num != opponent_page_num:
+            raise HTTPException(status_code=500, detail="Mismatched pages")
+
+        return player_page_num
+
+    def get_player_status(self, game_id, player_name):
+        if game_id not in self.games:
+            raise HTTPException(status_code=404, detail="Game not found")
+
+        player_status = self.games[game_id].player
+        opponent_status = self.games[game_id].opponent
+
+        if player_status.name == player_name:
+            return repr(player_status)
+
+        if opponent_status.name == player_name:
+            return repr(opponent_status)
+
+        raise HTTPException(status_code=404, detail="Player is not in the game")
